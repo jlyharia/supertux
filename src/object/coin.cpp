@@ -17,6 +17,7 @@
 #include "object/coin.hpp"
 
 #include "audio/sound_manager.hpp"
+#include "audio/sound_source.hpp"
 #include "editor/editor.hpp"
 #include "object/bouncy_coin.hpp"
 #include "object/player.hpp"
@@ -33,7 +34,8 @@ Coin::Coin(const Vector& pos)
     offset(),
     from_tilemap(false),
     add_path(false),
-    physic()
+    physic(),
+    collect_script()
 {
   SoundManager::current()->preload("sounds/coin.wav");
 }
@@ -45,7 +47,8 @@ Coin::Coin(const Vector& pos, TileMap* tilemap)
     offset(),
     from_tilemap(true),
     add_path(false),
-    physic()
+    physic(),
+    collect_script()
 {
   if(walker.get()) {
     Vector v = path->get_base();
@@ -62,7 +65,8 @@ Coin::Coin(const ReaderMapping& reader)
     offset(),
     from_tilemap(false),
     add_path(false),
-    physic()
+    physic(),
+    collect_script()
 {
   ReaderMapping path_mapping;
   if (reader.get("path", path_mapping)) {
@@ -72,6 +76,8 @@ Coin::Coin(const ReaderMapping& reader)
     Vector v = path->get_base();
     set_pos(v);
   }
+
+  if(!reader.get("collect-script", collect_script)) collect_script = "";
 
   SoundManager::current()->preload("sounds/coin.wav");
 }
@@ -103,86 +109,87 @@ Coin::update(float elapsed_time)
 void
 Coin::collect()
 {
-  // TODO: commented out musical code. Maybe fork this for a special "MusicalCoin" object?
-  /*
-    static Timer sound_timer;
-    static int pitch_one = 128;
-    static float last_pitch = 1;
-    float pitch = 1;
+  static Timer sound_timer;
+  static int pitch_one = 128;
+  static float last_pitch = 1;
+  float pitch = 1;
 
-    int tile = static_cast<int>(get_pos().y / 32);
+  int tile = static_cast<int>(get_pos().y / 32);
 
-    if (!sound_timer.started()) {
+  if (!sound_timer.started()) {
     pitch_one = tile;
     pitch = 1;
     last_pitch = 1;
-    }
-    else if (sound_timer.get_timegone() < 0.02) {
+  } else if (sound_timer.get_timegone() < 0.02) {
     pitch = last_pitch;
-    }
-    else
-    {
+  } else {
     switch ((pitch_one - tile) % 7) {
-    case -6:
-    pitch = 1.0/2;
-    break;
-    case -5:
-    pitch = 5.0/8;
-    break;
-    case -4:
-    pitch = 4.0/6;
-    break;
-    case -3:
-    pitch = 3.0/4;
-    break;
-    case -2:
-    pitch = 5.0/6;
-    break;
-    case -1:
-    pitch = 9.0/10;
-    break;
-    case 0:
-    pitch = 1.0;
-    break;
-    case 1:
-    pitch = 9.0/8;
-    break;
-    case 2:
-    pitch = 5.0/4;
-    break;
-    case 3:
-    pitch = 4.0/3;
-    break;
-    case 4:
-    pitch = 3.0/2;
-    break;
-    case 5:
-    pitch = 5.0/3;
-    break;
-    case 6:
-    pitch = 9.0/5;
-    break;
+      case -6:
+        pitch = 1.0/2;
+        break;
+      case -5:
+        pitch = 5.0/8;
+        break;
+      case -4:
+        pitch = 4.0/6;
+        break;
+      case -3:
+        pitch = 3.0/4;
+        break;
+      case -2:
+        pitch = 5.0/6;
+        break;
+      case -1:
+        pitch = 9.0/10;
+        break;
+      case 0:
+        pitch = 1.0;
+        break;
+      case 1:
+        pitch = 9.0/8;
+        break;
+      case 2:
+        pitch = 5.0/4;
+        break;
+      case 3:
+        pitch = 4.0/3;
+        break;
+      case 4:
+        pitch = 3.0/2;
+        break;
+      case 5:
+        pitch = 5.0/3;
+        break;
+      case 6:
+        pitch = 9.0/5;
+        break;
     }
     last_pitch = pitch;
-    }
-    sound_timer.start(1);
+  }
+  sound_timer.start(1);
 
-    SoundSource* soundSource = SoundManager::current()->create_sound_source("sounds/coin.wav");
-    soundSource->set_position(get_pos());
-    soundSource->set_pitch(pitch);
-    soundSource->play();
-    SoundManager::current()->manage_source(soundSource);
-  */
-  Sector::current()->player->get_status()->add_coins(1);
-  Sector::current()->add_object(std::make_shared<BouncyCoin>(get_pos(), false, get_sprite_name()));
-  Sector::current()->get_level()->stats.coins++;
+  std::unique_ptr<SoundSource> soundSource = SoundManager::current()->create_sound_source("sounds/coin.wav");
+  soundSource->set_position(get_pos());
+  soundSource->set_pitch(pitch);
+  soundSource->play();
+  SoundManager::current()->manage_source(std::move(soundSource));
+
+  auto sector = Sector::current();
+  sector->player->get_status()->add_coins(1, false);
+  sector->add_object(std::make_shared<BouncyCoin>(get_pos(), false, get_sprite_name()));
+  sector->get_level()->stats.coins++;
   remove_me();
+
+  if(!collect_script.empty()) {
+    std::istringstream stream(collect_script);
+    sector->run_script(stream, "collect-script");
+  }
 }
 
 HitResponse
 Coin::collision(GameObject& other, const CollisionHit& )
 {
-  Player* player = dynamic_cast<Player*>(&other);
+  auto player = dynamic_cast<Player*>(&other);
   if(player == 0)
     return ABORT_MOVE;
 
@@ -266,6 +273,9 @@ Coin::get_settings()
     result.options.push_back( Path::get_mode_option(&path->mode) );
   }
 
+  result.options.push_back( ObjectOption(MN_SCRIPT, _("Collect script"),
+                                         &collect_script, "collect-script"));
+
   return result;
 }
 
@@ -289,7 +299,10 @@ Coin::after_editor_set()
 ObjectSettings
 HeavyCoin::get_settings()
 {
-  return MovingSprite::get_settings();
+  auto result = MovingSprite::get_settings();
+  result.options.push_back( ObjectOption(MN_SCRIPT, _("Collect script"),
+                                         &collect_script, "collect-script"));
+  return result;
 }
 
 void

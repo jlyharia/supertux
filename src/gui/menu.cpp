@@ -46,6 +46,7 @@ Menu::Menu() :
   delete_character(),
   mn_input_char(),
   menu_repeat_time(),
+  menu_width(),
   items(),
   arrange_left(),
   active_item()
@@ -75,7 +76,7 @@ MenuItem*
 Menu::add_item(std::unique_ptr<MenuItem> new_item)
 {
   items.push_back(std::move(new_item));
-  MenuItem* item = items.back().get();
+  auto item = items.back().get();
 
   /* If a new menu is being built, the active item shouldn't be set to
    * something that isn't selectable. Set the active_item to the first
@@ -86,6 +87,8 @@ Menu::add_item(std::unique_ptr<MenuItem> new_item)
   {
     active_item = items.size() - 1;
   }
+
+  calculate_width();
 
   return item;
 }
@@ -104,6 +107,8 @@ Menu::add_item(std::unique_ptr<MenuItem> new_item, int pos_)
   {
     active_item++;
   }
+
+  calculate_width();
 
   return item;
 }
@@ -375,7 +380,9 @@ Menu::process_action(MenuAction menuaction)
       break;
 
     case MENU_ACTION_BACK:
-      MenuManager::instance().pop_menu();
+      if(on_back_action()) {
+        MenuManager::instance().pop_menu();
+      }
       return;
       break;
 
@@ -389,54 +396,61 @@ Menu::process_action(MenuAction menuaction)
   }
 
   items[active_item]->process_action(menuaction);
+  if(items[active_item]->changes_width()) {
+    calculate_width();
+  }
   if(menuaction == MENU_ACTION_HIT) {
     menu_action(items[active_item].get());
   }
-
 }
 
 void
 Menu::draw_item(DrawingContext& context, int index)
 {
   float menu_height = get_height();
-  float menu_width  = get_width();
+  float menu_width_ = get_width();
 
   MenuItem* pitem = items[index].get();
 
-  float x_pos       = pos.x - menu_width/2;
+  float x_pos       = pos.x - menu_width_/2;
   float y_pos       = pos.y + 24*index - menu_height/2 + 12;
 
-  pitem->draw(context, Vector(x_pos, y_pos), menu_width, active_item == index);
+  pitem->draw(context, Vector(x_pos, y_pos), menu_width_, active_item == index);
 
   if(active_item == index)
   {
     float blink = (sinf(real_time * M_PI * 1.0f)/2.0f + 0.5f) * 0.5f + 0.25f;
-    context.draw_filled_rect(Rectf(Vector(pos.x - menu_width/2 + 10 - 2, y_pos - 12 - 2),
-                                   Vector(pos.x + menu_width/2 - 10 + 2, y_pos + 12 + 2)),
+    context.draw_filled_rect(Rectf(Vector(pos.x - menu_width_/2 + 10 - 2, y_pos - 12 - 2),
+                                   Vector(pos.x + menu_width_/2 - 10 + 2, y_pos + 12 + 2)),
                              Color(1.0f, 1.0f, 1.0f, blink),
                              14.0f,
                              LAYER_GUI-10);
-    context.draw_filled_rect(Rectf(Vector(pos.x - menu_width/2 + 10, y_pos - 12),
-                                   Vector(pos.x + menu_width/2 - 10, y_pos + 12)),
+    context.draw_filled_rect(Rectf(Vector(pos.x - menu_width_/2 + 10, y_pos - 12),
+                                   Vector(pos.x + menu_width_/2 - 10, y_pos + 12)),
                              Color(1.0f, 1.0f, 1.0f, 0.5f),
                              12.0f,
                              LAYER_GUI-10);
   }
 }
 
-float
-Menu::get_width() const
+void
+Menu::calculate_width()
 {
   /* The width of the menu has to be more than the width of the text
      with the most characters */
-  float menu_width = 0;
+  float max_width = 0;
   for(unsigned int i = 0; i < items.size(); ++i)
   {
     float w = items[i]->get_width();
-    if(w > menu_width)
-      menu_width = w;
+    if(w > max_width)
+      max_width = w;
   }
+  menu_width = max_width;
+}
 
+float
+Menu::get_width() const
+{
   return menu_width + 24;
 }
 
@@ -526,6 +540,16 @@ Menu::event(const SDL_Event& ev)
 {
   items[active_item]->event(ev);
   switch(ev.type) {
+    case SDL_KEYDOWN:
+    case SDL_TEXTINPUT:
+      if(((ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_BACKSPACE) ||
+         ev.type == SDL_TEXTINPUT) && items[active_item]->changes_width())
+      {
+        // Changed item value? Let's recalculate width:
+        calculate_width();
+      }
+    break;
+
     case SDL_MOUSEBUTTONDOWN:
     if(ev.button.button == SDL_BUTTON_LEFT)
     {
@@ -589,7 +613,7 @@ Menu::set_active_item(int id)
 }
 
 bool
-Menu::is_sensitive() {
+Menu::is_sensitive() const {
   return false;
 }
 

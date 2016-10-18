@@ -28,6 +28,7 @@
 #include "supertux/world.hpp"
 #include "util/gettext.hpp"
 #include "video/color.hpp"
+#include "video/drawing_context.hpp"
 
 EditorMenu::EditorMenu()
 {
@@ -37,7 +38,7 @@ EditorMenu::EditorMenu()
   add_label(_("Level Editor"));
   add_hl();
   add_entry(MNID_RETURNTOEDITOR, _("Return to editor"));
-  add_entry(MNID_SAVELEVEL, _("Save current level"));
+  add_entry(MNID_SAVELEVEL, worldmap ? _("Save current worldmap") : _("Save current level"));
 
   if (!worldmap) {
     add_entry(MNID_TESTLEVEL, _("Test the level"));
@@ -49,15 +50,12 @@ EditorMenu::EditorMenu()
 
   add_entry(MNID_LEVELSETSEL, _("Choose another level subset"));
 
+  add_toggle(-1, _("Render lighting (F6)"), &DrawingContext::render_lighting);
   add_toggle(-1, _("Show grid (F8)"), &EditorInputCenter::render_grid);
   add_toggle(-1, _("Show scroller (F9)"), &EditorScroller::rendered);
 
   add_submenu(worldmap ? _("Worldmap properties") : _("Level properties"),
               MenuStorage::EDITOR_LEVEL_MENU);
-
-  if (is_world) {
-    add_submenu(_("Level subset properties"), MenuStorage::EDITOR_LEVELSET_MENU);
-  }
 
   add_hl();
   add_entry(MNID_QUITEDITOR, _("Exit level editor"));
@@ -65,7 +63,11 @@ EditorMenu::EditorMenu()
 
 EditorMenu::~EditorMenu()
 {
-  Editor::current()->reactivate_request = true;
+  auto editor = Editor::current();
+  if(editor == NULL) {
+    return;
+  }
+  editor->reactivate_request = true;
 }
 
 void

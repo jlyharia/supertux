@@ -29,7 +29,6 @@
 #include "object/particles.hpp"
 #include "object/portable.hpp"
 #include "object/sprite_particle.hpp"
-#include "scripting/player.hpp"
 #include "scripting/squirrel_util.hpp"
 #include "supertux/game_session.hpp"
 #include "supertux/gameconfig.hpp"
@@ -115,6 +114,7 @@ bool no_water = true;
 }
 
 Player::Player(PlayerStatus* _player_status, const std::string& name_) :
+  ExposedObject<Player, scripting::Player>(this),
   deactivated(false),
   controller(),
   scripting_controller(),
@@ -205,25 +205,6 @@ Player::Player(PlayerStatus* _player_status, const std::string& name_) :
 Player::~Player()
 {
   if (climbing) stop_climbing(*climbing);
-}
-
-void
-Player::expose(HSQUIRRELVM vm, SQInteger table_idx)
-{
-  if (name.empty())
-    return;
-
-  auto obj = new scripting::Player(this);
-  scripting::expose_object(vm, table_idx, obj, name, false);
-}
-
-void
-Player::unexpose(HSQUIRRELVM vm, SQInteger table_idx)
-{
-  if (name.empty())
-    return;
-
-  scripting::unexpose_object(vm, table_idx, name);
 }
 
 float
@@ -325,6 +306,7 @@ Player::update(float elapsed_time)
   no_water = true;
 
   if(dying && dying_timer.check()) {
+    Sector::current()->stop_looping_sounds();
     set_bonus(NO_BONUS, true);
     dead = true;
     return;
@@ -556,21 +538,27 @@ Player::handle_horizontal_input()
   }
 
   // changing directions?
-  if(on_ground() && ((vx < 0 && dirsign >0) || (vx>0 && dirsign<0))) {
-    // let's skid!
-    if(fabs(vx)>SKID_XM && !skidding_timer.started()) {
-      skidding_timer.start(SKID_TIME);
-      SoundManager::current()->play("sounds/skid.wav");
-      // dust some particles
-      Sector::current()->add_object(
-        std::make_shared<Particles>(
-          Vector(dir == LEFT ? bbox.p2.x : bbox.p1.x, bbox.p2.y),
-          dir == LEFT ? 50 : -70, dir == LEFT ? 70 : -50, 260, 280,
-          Vector(0, 300), 3, Color(.4f, .4f, .4f), 3, .8f, LAYER_OBJECTS+1));
+  if ((vx < 0 && dirsign >0) || (vx>0 && dirsign<0)) {
+    if(on_ground()) {
+      // let's skid!
+      if(fabs(vx)>SKID_XM && !skidding_timer.started()) {
+        skidding_timer.start(SKID_TIME);
+        SoundManager::current()->play("sounds/skid.wav");
+        // dust some particles
+        Sector::current()->add_object(
+          std::make_shared<Particles>(
+            Vector(dir == LEFT ? bbox.p2.x : bbox.p1.x, bbox.p2.y),
+            dir == LEFT ? 50 : -70, dir == LEFT ? 70 : -50, 260, 280,
+            Vector(0, 300), 3, Color(.4f, .4f, .4f), 3, .8f, LAYER_OBJECTS+1));
 
-      ax *= 2.5;
-    } else {
-      ax *= 2;
+        ax *= 2.5;
+      } else {
+        ax *= 2;
+      }
+    }
+    else {
+      // give Tux tighter air control
+      ax *= 2.0;
     }
   }
 

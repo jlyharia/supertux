@@ -65,7 +65,7 @@ INCLUDE(TestBigEndian)
 TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 
 ## Add definitions
-IF(CMAKE_BUILD_TYPE MATCHES Release)
+IF(CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo")
   ADD_DEFINITIONS(-DRELEASE)
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Debug)
   ADD_DEFINITIONS(-DDEBUG)
@@ -118,8 +118,7 @@ IF(ENABLE_BOOST_STATIC_LIBS)
 ELSE(ENABLE_BOOST_STATIC_LIBS)
   SET(Boost_USE_STATIC_LIBS FALSE)
 ENDIF(ENABLE_BOOST_STATIC_LIBS)
-FIND_PATH(PHYSFS_INCLUDE_DIR NAMES physfs.h PATHS "${DEPENDENCY_FOLDER}/include/physfs")
-FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem system)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem system date_time)
 INCLUDE_DIRECTORIES(SYSTEM ${Boost_INCLUDE_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
@@ -129,6 +128,7 @@ IF(WIN32)
   FIND_LIBRARY(SDL2_LIBRARIES NAMES SDL2 PATHS "${DEPENDENCY_FOLDER}/lib")
   FIND_LIBRARY(SDL2IMAGE_LIBRARIES NAMES SDL2_image PATHS "${DEPENDENCY_FOLDER}/lib")
   FIND_LIBRARY(SDL2MAIN_LIBRARIES NAMES SDL2main PATHS "${DEPENDENCY_FOLDER}/lib")
+FIND_PATH(PHYSFS_INCLUDE_DIR NAMES physfs.h PATHS "${DEPENDENCY_FOLDER}/include/physfs")
 ELSE(WIN32)
   INCLUDE(FindPkgConfig)
   PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2>=2.0.1)
@@ -290,6 +290,29 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_SOURCE_DIR}/src/addon/addon_manager.
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/levels/misc/menu.stl.in ${CMAKE_BINARY_DIR}/data/levels/misc/menu.stl )
 
+## Configure doxygen
+# Adapted from https://tty1.net/blog/2014/cmake-doxygen_en.html
+# add a target to generate API documentation with Doxygen
+find_package(Doxygen)
+option(BUILD_DOCUMENTATION "Build API documentation using Doxygen" ${DOXYGEN_FOUND})
+
+if(BUILD_DOCUMENTATION)
+    if(NOT DOXYGEN_FOUND)
+        message(FATAL_ERROR "Doxygen is needed to build the documentation.")
+    endif()
+
+    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+    set(doxyfile ${CMAKE_CURRENT_BINARY_DIR}/docs/Doxyfile)
+
+    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
+
+    add_custom_target(doc
+        COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM)
+endif()
+
 ## Check platform-dependent build options
 
 INCLUDE(ConfigureChecks)
@@ -305,6 +328,7 @@ SET(SQUIRREL_PREFIX ${CMAKE_BINARY_DIR}/squirrel/)
 ExternalProject_Add(squirrel
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/squirrel/"
   CMAKE_ARGS
+  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
   -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
   -DCMAKE_INSTALL_PREFIX=${SQUIRREL_PREFIX}
@@ -339,6 +363,7 @@ set(TINYGETTEXT_PREFIX ${CMAKE_BINARY_DIR}/tinygettext/)
 ExternalProject_Add(tinygettext
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/tinygettext/"
   CMAKE_ARGS
+  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
   -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
   -DBUILD_SHARED_LIBS=OFF
@@ -725,7 +750,7 @@ INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data/images
                   ${CMAKE_CURRENT_SOURCE_DIR}/data/locale
                   DESTINATION ${INSTALL_SUBDIR_SHARE})
 
-IF(CMAKE_BUILD_TYPE MATCHES Release)
+IF(CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo")
   INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data/levels
                     DESTINATION ${INSTALL_SUBDIR_SHARE}
                     PATTERN "data/levels/test" EXCLUDE
@@ -745,7 +770,7 @@ INSTALL(FILES "${CMAKE_BINARY_DIR}/data/levels/misc/menu.stl" DESTINATION "${INS
 configure_file(config.h.cmake ${CMAKE_BINARY_DIR}/config.h )
 
 ## Configure main menu logo
-IF(CMAKE_BUILD_TYPE MATCHES Release)
+IF(CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo")
     SET(LOGO_FILE "logo_final.sprite")
 ELSE()
     SET(LOGO_FILE "logo.sprite")

@@ -48,6 +48,7 @@
 #include "supertux/world.hpp"
 #include "util/file_system.hpp"
 #include "util/reader_mapping.hpp"
+#include "video/drawing_request.hpp"
 #include "video/surface.hpp"
 
 Editor::Editor() :
@@ -151,6 +152,7 @@ void Editor::update(float elapsed_time)
 
 void Editor::test_level() {
   Tile::draw_editor_images = false;
+  DrawingContext::render_lighting = true;
   level->save("levels/misc/test.stl");
   std::unique_ptr<World> test_world = World::load("levels/misc");
   GameManager::current()->start_level(std::move(test_world), "test.stl");
@@ -265,7 +267,7 @@ void Editor::load_layers() {
     if ( !mo && go->do_save() ) {
       layerselect.add_layer(go);
 
-      TileMap *tm = dynamic_cast<TileMap*>(go);
+      auto tm = dynamic_cast<TileMap*>(go);
       if (tm) {
         if ( !tm->is_solid() || tsel ) {
           tm->editor_active = false;
@@ -279,6 +281,7 @@ void Editor::load_layers() {
     }
   }
 
+  layerselect.sort_layers();
   layerselect.refresh_sector_text();
 }
 
@@ -334,6 +337,7 @@ void Editor::quit_editor() {
 void Editor::leave()
 {
   MouseCursor::current()->set_icon(NULL);
+  DrawingContext::render_lighting = true;
 }
 
 void
@@ -398,6 +402,10 @@ Editor::resize() {
 void
 Editor::event(SDL_Event& ev) {
   if (enabled) {
+    if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_F6) {
+      DrawingContext::render_lighting = !DrawingContext::render_lighting;
+    }
+
     if ( tileselect.event(ev) ) {
       return;
     }

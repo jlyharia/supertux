@@ -41,7 +41,8 @@
 
 #include "math/vector.hpp"
 #include "supertux/moving_object.hpp"
-#include "supertux/script_interface.hpp"
+#include "scripting/ambient_sound.hpp"
+#include "scripting/exposed_object.hpp"
 
 class GameObject;
 class Player;
@@ -49,11 +50,11 @@ class ReaderMapping;
 class SoundSource;
 
 class AmbientSound : public MovingObject,
-                     public ScriptInterface
+                     public ExposedObject<AmbientSound, scripting::AmbientSound>
 {
 public:
   AmbientSound(const ReaderMapping& lisp);
-  AmbientSound(Vector pos, float factor, float bias, float vol, const std::string& file);
+  AmbientSound(const Vector& pos, float factor, float bias, float vol, const std::string& file);
   ~AmbientSound();
 
   HitResponse collision(GameObject& other, const CollisionHit& hit_);
@@ -92,8 +93,6 @@ protected:
   virtual void update(float time);
   virtual void start_playing();
   virtual void stop_playing();
-  virtual void expose(HSQUIRRELVM vm, SQInteger table_idx);
-  virtual void unexpose(HSQUIRRELVM vm, SQInteger table_idx);
 
 private:
 

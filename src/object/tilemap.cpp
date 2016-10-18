@@ -21,7 +21,6 @@
 #include "editor/editor.hpp"
 #include "object/tilemap.hpp"
 #include "scripting/squirrel_util.hpp"
-#include "scripting/tilemap.hpp"
 #include "supertux/globals.hpp"
 #include "supertux/level.hpp"
 #include "supertux/object_factory.hpp"
@@ -33,6 +32,7 @@
 #include "util/reader_mapping.hpp"
 
 TileMap::TileMap(const TileSet *new_tileset) :
+  ExposedObject<TileMap, scripting::TileMap>(this),
   editor_active(true),
   tileset(new_tileset),
   tiles(),
@@ -62,6 +62,7 @@ TileMap::TileMap(const TileSet *new_tileset) :
 }
 
 TileMap::TileMap(const TileSet *tileset_, const ReaderMapping& reader) :
+  ExposedObject<TileMap, scripting::TileMap>(this),
   editor_active(true),
   tileset(tileset_),
   tiles(),
@@ -218,6 +219,11 @@ TileMap::get_settings() {
   result.options.push_back( ObjectOption(MN_NUMFIELD, _("Speed y"), &speed_y));
   result.options.push_back( ObjectOption(MN_COLOR, _("tint"), &tint));
   result.options.push_back( ObjectOption(MN_INTFIELD, _("Z-pos"), &z_pos));
+
+  ObjectOption draw_target_option(MN_STRINGSELECT, _("Draw target"), &draw_target);
+  draw_target_option.select.push_back(_("normal"));
+  draw_target_option.select.push_back(_("lightmap"));
+  result.options.push_back(draw_target_option);
 
   add_path = walker.get() && path->is_valid();
   result.options.push_back( ObjectOption(MN_TOGGLE, _("Following path"), &add_path));
@@ -428,21 +434,6 @@ TileMap::stop_moving()
 {
   if (!walker.get()) return;
   walker->stop_moving();
-}
-
-void
-TileMap::expose(HSQUIRRELVM vm, SQInteger table_idx)
-{
-  if (name.empty()) return;
-  scripting::TileMap* _this = new scripting::TileMap(this);
-  expose_object(vm, table_idx, _this, name, true);
-}
-
-void
-TileMap::unexpose(HSQUIRRELVM vm, SQInteger table_idx)
-{
-  if (name.empty()) return;
-  scripting::unexpose_object(vm, table_idx, name);
 }
 
 void

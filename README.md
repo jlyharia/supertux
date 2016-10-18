@@ -1,10 +1,10 @@
+# SuperTux
+
 [![Build Status](https://travis-ci.org/SuperTux/supertux.svg?branch=master)](https://travis-ci.org/SuperTux/supertux)
 [![AppVeyor Build Satus](https://ci.appveyor.com/api/projects/status/github/SuperTux/supertux?svg=true&branch=master)](https://ci.appveyor.com/project/supertux/supertux-9ml4d/branch/master)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/4025/badge.svg)](https://scan.coverity.com/projects/4025)
 [![Github All Releases](https://img.shields.io/github/downloads/supertux/supertux/total.svg?maxAge=2592000)](https://github.com/SuperTux/supertux)
-# SuperTux - <http://supertuxproject.org/>
-
-Last update: December 20, 2015
+[![#supertux on freenode](https://img.shields.io/badge/freenode-%23supertux-brightgreen.svg)](https://webchat.freenode.net/?channels=supertux)
 
 ## Description
 
@@ -45,7 +45,7 @@ licensed. (Most of the data subdirectory is also licensed under
 CC-by-SA)
 * `docs/levelguidelines.txt` - Very useful information for those that want to
 design levels for SuperTux.
-* `data/credits.txt` - Credits for people that contributed to the creation of
+* `data/credits.stxt` - Credits for people that contributed to the creation of
 SuperTux. (You can view these in the game menu as well.)
 
 
@@ -88,21 +88,24 @@ enter the current level.
 
 ## Development status
 
-With the release of SuperTux Milestone 2 (December 2015), we hope to
-provide a fairly stable release. Development of the game will continue
-(of course), now working towards a Milestone 3 release.
+With the release of SuperTux 0.4.0 (December 2015), we wanted to provide a
+fairly stable release. The release of SuperTux 0.5.0 should have fixed some
+stability issues from 0.4.0 and introduced a new level editor. Development of
+the game will continue (of course), now working towards more releases.
+Most notably, development focus will be shifted on providing a better gameplay
+experience.
 
-The Forest World (you can check it out:
-Start Game > Contrib Levels > Forest World) is notably unstable, which
-is why it resides only in the contrib levels menu. We (SuperTux Team)
-intend to continue with the development of the Forest World, but
-decided that in order to allow more access to the most recent version
-(in repositories etc.) we would have to release Milestone 2 without the 
-Forest World included in the Story Mode.
+The Forest World (you can check it out: Start Game > Contrib Levels > Forest
+World) is relatively unstable, which is why it resides only in the contrib
+levels menu. We (SuperTux Team) intend to continue with the development of the
+Forest World, but decided that in order to allow more access to the most recent
+version (in repositories etc.) we would have to release Milestone 2 without the
+Forest World included in the Story Mode. Constructive feedback with regards to
+the Forest World is welcome.
 
 Don't forget that you can get involved with the development at
 <https://github.com/supertux/supertux>,
-or get updated about the recent changes on Twitter 
+or get notified about the recent changes on Twitter
 [@supertux_team](https://twitter.com/supertux_team)
 
 
@@ -110,4 +113,4 @@ or get updated about the recent changes on Twitter
 
 Thanks for playing SuperTux.
 
-The SuperTux development team
+The SuperTux Team

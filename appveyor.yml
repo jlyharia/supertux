@@ -8,7 +8,6 @@ install:
     Invoke-WebRequest http://download.supertuxproject.org/builddep/dependencies-win32.zip -OutFile "$env:APPVEYOR_BUILD_FOLDER/dependencies.zip"
     Add-Type -assembly "system.io.compression.filesystem"
     [io.compression.zipfile]::ExtractToDirectory("$env:APPVEYOR_BUILD_FOLDER/dependencies.zip", "$env:APPVEYOR_BUILD_FOLDER/")
-    move "$env:APPVEYOR_BUILD_FOLDER/dependencies" "$env:APPVEYOR_BUILD_FOLDER/dependencies32"
 
 before_build:
 - cmd: |
@@ -33,17 +32,6 @@ artifacts:
   name: setup
 
 deploy:
-- provider: BinTray
-  username: maths22
-  api_key:
-    secure: 9miH0V65c10cbWfovqIfIHWsbyrg6jZDnaYxyGYHF5pyQbPnS+LcIX6Y/8gK2pM4
-  subject: supertux
-  repo: SuperTux-Nightly
-  package: win32
-  publish: true
-  override: true
-  on:
-    branch: master
 - provider: GitHub
   description: 'SuperTux release'
   auth_token:
@@ -53,3 +41,14 @@ deploy:
   on:
     branch: master                 # release from master branch only
     appveyor_repo_tag: true        # deploy on tag push only
+#- provider: BinTray
+#  username: maths22
+#  api_key:
+#    secure: 9miH0V65c10cbWfovqIfIHWsbyrg6jZDnaYxyGYHF5pyQbPnS+LcIX6Y/8gK2pM4
+#  subject: supertux
+#  repo: SuperTux-Nightly
+#  package: win32
+#  publish: true
+#  override: true
+#  on:
+#    branch: master

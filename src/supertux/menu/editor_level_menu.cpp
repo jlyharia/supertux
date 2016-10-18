@@ -48,12 +48,15 @@ EditorLevelMenu::EditorLevelMenu() :
   }
 
   add_hl();
-  add_entry(-2, _("OK"));
+  add_back(_("OK"));
 }
 
 EditorLevelMenu::~EditorLevelMenu()
 {
   auto editor = Editor::current();
+  if(editor == NULL) {
+    return;
+  }
   if (editor->get_level()->tileset != old_tileset) {
     editor->change_tileset();
   }
@@ -62,31 +65,33 @@ EditorLevelMenu::~EditorLevelMenu()
 void
 EditorLevelMenu::menu_action(MenuItem* item)
 {
-  if(item->id == -2)
+}
+
+bool
+EditorLevelMenu::on_back_action()
+{
+  auto level = Editor::current()->get_level();
+  if(!level->name.empty() && !level->author.empty() && !level->license.empty())
   {
-    auto level = Editor::current()->get_level();
-    if(!level->name.empty() && !level->author.empty() && !level->license.empty())
-    {
-      MenuManager::instance().pop_menu();
-      return;
-    }
-    std::unique_ptr<Dialog> dialog(new Dialog);
-    if(level->name.empty())
-    {
-      dialog->set_text(_("Please enter a name for this level."));
-    }
-    else if(level->author.empty())
-    {
-      dialog->set_text(_("Please enter a level author for this level."));
-    }
-    else if(level->license.empty())
-    {
-      dialog->set_text(_("Please enter a license for this level."));
-    }
-    dialog->clear_buttons();
-    dialog->add_button(_("OK"), [] {});
-    MenuManager::instance().set_dialog(std::move(dialog));
+    return true;
   }
+  std::unique_ptr<Dialog> dialog(new Dialog);
+  if(level->name.empty())
+  {
+    dialog->set_text(_("Please enter a name for this level."));
+  }
+  else if(level->author.empty())
+  {
+    dialog->set_text(_("Please enter a level author for this level."));
+  }
+  else if(level->license.empty())
+  {
+    dialog->set_text(_("Please enter a license for this level."));
+  }
+  dialog->clear_buttons();
+  dialog->add_button(_("OK"), [] {});
+  MenuManager::instance().set_dialog(std::move(dialog));
+  return false;
 }
 
 /* EOF */

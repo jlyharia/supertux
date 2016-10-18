@@ -1,10 +1,10 @@
 SuperTux Release and Development Notes
 ======================================
 
-SuperTux 0.5.0-rc.3 (2016-08-26)
---------------------------------
+SuperTux 0.5.0 (2016-09-25)
+---------------------------
 
-The SuperTux team is excited to announce the availability of the third release candidate for the upcoming stable release 0.5.0 after less than a year of development. The most prominent change for this release is a new in-game level editor which allows you to create levels and worldmaps on-the-fly from within SuperTux itself.
+The SuperTux team is excited to announce the availability of the stable release 0.5.0 after less than a year of development. The most prominent change for this release is a new in-game level editor which allows you to create levels and worldmaps on-the-fly from within SuperTux itself.
 
 Changes:
 
@@ -16,6 +16,7 @@ Changes:
 * Added a few more tiles and music
 * New console commands and command line options (related to the editor)
 * Various other bugfixes of issues reported since the v0.4.0 release
+* And more (minor) improvements and changes
 
 Changes from 0.5.0-rc.1 (2016-08-05):
 
@@ -45,7 +46,36 @@ Changes from 0.5.0-rc.2 (2016-08-10):
 * Editor: Better approach for layer removal (#510)
 * Add a launcher script for Windows builds (#443)
 
-This section will be updated with more RCs or a stable version being released.
+Changes from 0.5.0-rc.3 (2016-08-26):
+
+* Fixes for the build system and updates with regard to the automatic deployment
+  of releases
+* More code style fixes
+* Editor: verify some level properties have been set
+* Add the possibility to add sawblade/hurting platforms using the editor
+* Jump with Up: mark as deprecated in KeyboardMenu and JoystickMenu (addresses
+  #499)
+* Fix an issue with odd behavior of music playback (#583)
+* Update some parts of the (user) documentation
+* Editor: multiple fixes to levelset and worldmap creation, including UX
+  improvements
+* Editor: Angle option for spotlight
+* Unify string spelling for consistency
+* String freeze for translators is now in effect
+* Editor: sort layer in ascending order
+* Scripting: deduplicate code using the ExposedObject template class
+* Update the translations to reflect the translation progress as of 2016-09-12
+
+Changes from 0.5.0-rc.4 (2016-09-12):
+
+* Use PhysFS file system abstraction for is\_directory checks
+* Prevent statistics text from overlapping
+* Fix a bug with Level.edit() in squirrel (#207)
+
+Changes from 0.5.0-rc.5 (2016-09-23):
+
+* Stop looping sounds when dead
+* Final translation update
 
 SuperTux 0.4.0 (2015-12-20)
 ----------------------------

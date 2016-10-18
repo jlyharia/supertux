@@ -60,6 +60,12 @@ public:
 
   virtual void menu_action(MenuItem* item) = 0;
 
+  /**
+  * Executed before the menu is exited
+  * @return true if it should perform the back action, false if it shouldn't
+  */
+  virtual bool on_back_action() { return true; }
+
   void process_input();
 
   /** Perform actions to bring the menu up to date with configuration changes */
@@ -96,12 +102,16 @@ protected:
   void delete_item(int pos_);
 
   ///returns true when the text is more important than action
-  virtual bool is_sensitive();
+  virtual bool is_sensitive() const;
 
 private:
   void process_action(MenuAction menuaction);
   void check_controlfield_change_event(const SDL_Event& event);
   void draw_item(DrawingContext& context, int index);
+  /**
+   * Recalculates the width for this menu
+   */
+  void calculate_width();
 
 private:
   // position of the menu (ie. center of the menu, not top/left)
@@ -111,6 +121,7 @@ private:
   int   delete_character;
   char  mn_input_char;
   float menu_repeat_time;
+  float menu_width;
 
 public:
   std::vector<std::unique_ptr<MenuItem> > items;
